@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Sign In — UserSystem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300;1,9..144,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f5f0e8;
+            --surface: #ffffff;
+            --surface2: #faf7f2;
+            --text: #1a1612;
+            --muted: #7a7169;
+            --accent: #c8622a;
+            --accent2: #af5424;
+            --accent-light: #f5e8df;
+            --border: #ddd4c8;
+            --success: #2d6a4f;
+            --danger: #b83232;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-24px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse-ring {
+            0%   { transform: scale(1); opacity: .5; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-14px); }
+        }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 300;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 32px 16px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0; pointer-events: none;
+            background-image: radial-gradient(circle, rgba(200,98,42,.09) 1px, transparent 1px);
+            background-size: 30px 30px;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
+        }
+
+        .bg-blob {
+            position: fixed; border-radius: 50%; filter: blur(80px);
+            pointer-events: none; z-index: 0;
+        }
+        .blob-1 { width: 450px; height: 450px; background: rgba(200,98,42,.09); top: -80px; right: -60px; }
+        .blob-2 { width: 300px; height: 300px; background: rgba(200,98,42,.06); bottom: -40px; left: -40px; }
+
+        /* WRAP */
+        .wrap {
+            position: relative; z-index: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%; max-width: 900px;
+            min-height: 560px;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 24px 80px rgba(26,22,18,.14);
+            animation: fadeUp .6s ease both;
+        }
+
+        /* LEFT PANEL */
+        .panel-left {
+            background: linear-gradient(145deg, #c8622a 0%, #e8874a 60%, #af5424 100%);
+            padding: 56px 48px;
+            display: flex; flex-direction: column; justify-content: space-between;
+            color: #fff;
+            position: relative; overflow: hidden;
+        }
+
+        /* Decorative circles */
+        .panel-left::before {
+            content: '';
+            position: absolute;
+            width: 320px; height: 320px; border-radius: 50%;
+            border: 50px solid rgba(255,255,255,.08);
+            top: -80px; right: -80px;
+            animation: spin-slow 30s linear infinite;
+        }
+        .panel-left::after {
+            content: '';
+            position: absolute;
+            width: 200px; height: 200px; border-radius: 50%;
+            border: 30px solid rgba(255,255,255,.06);
+            bottom: -40px; left: -40px;
+        }
+
+        .panel-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 11px; text-transform: uppercase; letter-spacing: .14em;
+            background: rgba(255,255,255,.15); border-radius: 99px;
+            padding: 5px 12px; width: fit-content;
+            position: relative; z-index: 1;
+        }
+        .panel-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; position: relative; }
+        .panel-badge-dot::after {
+            content: ''; position: absolute; inset: -3px;
+            border-radius: 50%; border: 2px solid rgba(255,255,255,.6);
+            animation: pulse-ring 2s ease-out infinite;
+        }
+
+        .panel-title {
+            font-family: 'Fraunces', serif;
+            font-size: 44px; font-weight: 600;
+            line-height: 1.05;
+            position: relative; z-index: 1;
+        }
+        .panel-title em { font-style: italic; font-weight: 300; }
+
+        .panel-features {
+            position: relative; z-index: 1;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .panel-feature {
+            display: flex; align-items: center; gap: 12px;
+            font-size: 13px; opacity: .85;
+        }
+        .feature-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: rgba(255,255,255,.15);
+            display: grid; place-items: center;
+            font-size: 15px; flex-shrink: 0;
+        }
+
+        /* Floating emoji */
+        .floating-emoji {
+            position: absolute;
+            font-size: 28px;
+            animation: float 4s ease-in-out infinite;
+            z-index: 2; user-select: none;
+        }
+        .em-1 { bottom: 90px; right: 40px; animation-delay: 0s; }
+        .em-2 { top: 120px; right: 60px; animation-delay: 1.5s; font-size: 20px; }
+
+        /* RIGHT PANEL */
+        .panel-right {
+            background: var(--surface);
+            padding: 56px 48px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+
+        .brand {
+            font-family: 'Fraunces', serif; font-style: italic;
+            font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+            color: var(--muted); margin-bottom: 28px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .brand-dot-sm {
+            width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+        }
+
+        .form-title {
+            font-family: 'Fraunces', serif;
+            font-size: 30px; font-weight: 600; margin-bottom: 6px;
+        }
+        .form-sub { font-size: 13px; color: var(--muted); margin-bottom: 30px; }
+
+        /* Alerts */
+        .alert {
+            padding: 11px 14px; border-radius: 10px;
+            font-size: 13px; margin-bottom: 18px;
+            border-left: 3px solid; line-height: 1.5;
+        }
+        .alert-error { background: rgba(184,50,50,.07); border-color: var(--danger); color: var(--danger); }
+        .alert-success { background: rgba(45,106,79,.07); border-color: var(--success); color: var(--success); }
+        .alert-info { background: rgba(200,98,42,.07); border-color: var(--accent); color: var(--accent); }
+
+        /* Fields */
+        .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 18px; animation: slideIn .4s ease both; }
+
+        label {
+            font-size: 11px; font-weight: 500; letter-spacing: .08em;
+            text-transform: uppercase; color: var(--muted);
+        }
+
+        input {
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px; font-weight: 300;
+            padding: 12px 16px;
+            outline: none;
+            transition: all .18s;
+            width: 100%;
+        }
+        input:focus {
+            background: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(200,98,42,.11);
+        }
+        input:hover:not(:focus) { border-color: #c5bbb0; }
+
+        /* Password */
+        .password-wrap { position: relative; width: 100%; }
+        .password-wrap input { padding-right: 46px; }
+        .toggle-password {
+            position: absolute; top: 50%; right: 14px; transform: translateY(-50%);
+            border: none; background: none; cursor: pointer;
+            color: var(--muted); font-size: 15px; transition: color .15s;
+        }
+        .toggle-password:hover { color: var(--accent); }
+
+        /* Submit */
+        .btn-primary {
+            width: 100%; padding: 13px;
+            margin-top: 8px;
+            background: linear-gradient(135deg, var(--accent), #e8874a);
+            color: #fff; border: none; border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px; font-weight: 500; letter-spacing: .04em;
+            cursor: pointer;
+            transition: all .2s;
+            box-shadow: 0 4px 16px rgba(200,98,42,.28);
+            position: relative; overflow: hidden;
+        }
+        .btn-primary::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
+            transform: translateX(-100%); transition: transform .4s ease;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(200,98,42,.38); }
+        .btn-primary:hover::after { transform: translateX(100%); }
+        .btn-primary:active { transform: translateY(0); }
+
+        .card-footer {
+            text-align: center; margin-top: 20px;
+            font-size: 13px; color: var(--muted);
+        }
+        .card-footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+        .card-footer a:hover { text-decoration: underline; }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .wrap { grid-template-columns: 1fr; min-height: auto; }
+            .panel-left { min-height: 220px; padding: 36px 28px; }
+            .panel-title { font-size: 32px; }
+            .panel-features { display: none; }
+            .panel-right { padding: 36px 28px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-blob blob-1"></div>
+<div class="bg-blob blob-2"></div>
+
+<div class="wrap">
+
+    <!-- LEFT decorative panel -->
+    <div class="panel-left">
+        <div class="panel-badge">
+            <div class="panel-badge-dot"></div>
+            UserSystem
+        </div>
+
+        <div class="panel-title">
+            Welcome<br/><em>back.</em>
+        </div>
+
+        <div class="panel-features">
+            <div class="panel-feature">
+                <div class="feature-icon">🔐</div>
+                <span>JWT-secured sessions</span>
+            </div>
+            <div class="panel-feature">
+                <div class="feature-icon">✅</div>
+                <span>OTP email verification</span>
+            </div>
+            <div class="panel-feature">
+                <div class="feature-icon">🛡️</div>
+                <span>Role-based access control</span>
+            </div>
+        </div>
+
+        <div class="floating-emoji em-1">🔑</div>
+        <div class="floating-emoji em-2">✨</div>
+    </div>
+
+    <!-- RIGHT form panel -->
+    <div class="panel-right">
+        <div class="brand">
+            <div class="brand-dot-sm"></div>
+            UserSystem
+        </div>
+        <h2 class="form-title">Sign In</h2>
+        <p class="form-sub">Enter your credentials to continue.</p>
+
+        <!-- Alerts -->
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+        <div th:if="${param.logout}" class="alert alert-info">You have been signed out successfully.</div>
+        <div th:if="${param.forbidden}" class="alert alert-error">Access denied. Please sign in with the right account.</div>
+        <div th:if="${param.registered}" class="alert alert-success">🎉 Registration successful! Please sign in.</div>
+
+        <form th:action="@{/login}" th:object="${dto}" method="post">
+            <div class="field" style="animation-delay:.1s">
+                <label for="email">Email Address</label>
+                <input id="email" type="email" th:field="*{email}" placeholder="you@example.com" required autofocus/>
+            </div>
+
+            <div class="field" style="animation-delay:.2s">
+                <label for="password">Password</label>
+                <div class="password-wrap">
+                    <input id="password" type="password" th:field="*{password}" placeholder="••••••••" required/>
+                    <button type="button" class="toggle-password" onclick="togglePassword('password', this)">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn-primary" type="submit">Sign In →</button>
+        </form>
+
+        <div class="card-footer">
+            New here? <a href="/register">Create an account</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePassword(inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector("i");
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.replace("fa-eye-slash", "fa-eye");
+        } else {
+            input.type = "password";
+            icon.classList.replace("fa-eye", "fa-eye-slash");
+        }
+    }
+</script>
+</body>
+</html>

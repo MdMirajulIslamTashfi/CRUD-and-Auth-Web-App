@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Dashboard — UserSystem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,600;1,9..144,200;1,9..144,600&family=DM+Sans:wght@300;400;500&display=swap"
+          rel="stylesheet"/>
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f5f0e8;
+            --bg2: #ede8df;
+            --surface: #ffffff;
+            --surface2: #faf7f2;
+            --text: #1a1612;
+            --muted: #7a7169;
+            --accent: #c8622a;
+            --accent2: #af5424;
+            --accent-light: #f5e8df;
+            --border: #ddd4c8;
+            --danger: #b83232;
+            --success: #2d6a4f;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(1);
+                opacity: .5;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        @keyframes drift {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-16px);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% center;
+            }
+            100% {
+                background-position: 200% center;
+            }
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 300;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background dots */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background-image: radial-gradient(circle, rgba(200, 98, 42, .08) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        .bg-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .blob-1 {
+            width: 500px;
+            height: 500px;
+            background: rgba(200, 98, 42, .07);
+            top: -100px;
+            right: -80px;
+        }
+
+        .blob-2 {
+            width: 300px;
+            height: 300px;
+            background: rgba(200, 98, 42, .05);
+            bottom: 0;
+            left: -40px;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 48px;
+            height: 68px;
+            background: rgba(245, 240, 232, .92);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+            animation: fadeUp .4s ease both;
+        }
+
+        .brand {
+            font-family: 'Fraunces', serif;
+            font-weight: 600;
+            font-size: 22px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand strong {
+            color: var(--accent);
+        }
+
+        .brand-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            position: relative;
+        }
+
+        .brand-dot::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            opacity: .4;
+            animation: pulse-ring 2s ease-out infinite;
+        }
+
+        /* MENU */
+        .menu-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        #menu-toggle {
+            display: none;
+        }
+
+        .menu-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: all .2s;
+            flex-shrink: 0;
+        }
+
+        .menu-btn:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .menu-btn span,
+        .menu-btn span::before,
+        .menu-btn span::after {
+            display: block;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--text);
+        }
+
+        .menu-btn span {
+            position: relative;
+        }
+
+        .menu-btn span::before {
+            content: '';
+            position: absolute;
+            top: -7px;
+        }
+
+        .menu-btn span::after {
+            content: '';
+            position: absolute;
+            top: 7px;
+        }
+
+        .menu-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            width: 190px;
+            overflow: hidden;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, .10);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-8px) scale(.96);
+            transition: opacity .2s, transform .2s;
+            transform-origin: top right;
+        }
+
+        #menu-toggle:checked ~ .menu-dropdown {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateY(0) scale(1);
+        }
+
+        #menu-toggle:checked ~ label.menu-btn {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .menu-item {
+            display: block;
+            padding: 12px 18px;
+            font-size: 13px;
+            color: var(--text);
+            text-decoration: none;
+            border-bottom: 1px solid var(--border);
+            transition: background .15s;
+            font-weight: 400;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        .menu-logout-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 18px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--danger);
+            background: transparent;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .menu-logout-btn:hover {
+            background: rgba(184, 50, 50, .07);
+        }
+
+        /* MAIN */
+        main {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        /* GREETING */
+        .greeting {
+            margin-bottom: 48px;
+            animation: fadeUp .5s .1s ease both;
+        }
+
+        .greeting-label {
+            font-size: 13px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .greeting-name {
+            font-family: 'Fraunces', serif;
+            font-size: 50px;
+            font-weight: 600;
+            line-height: 1.08;
+        }
+
+        .greeting-name em {
+            font-style: italic;
+            font-weight: 200;
+            color: var(--accent);
+        }
+
+        .greeting-role {
+            display: inline-block;
+            margin-top: 14px;
+            padding: 4px 14px;
+            border-radius: 99px;
+            background: var(--accent-light);
+            border: 1px solid rgba(200, 98, 42, .25);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        /* HERO SECTION */
+        .hero-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: start;
+            margin-bottom: 40px;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .04);
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(0, 0, 0, .08);
+        }
+
+        .card-label {
+            font-size: 11px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-label::before {
+            content: '';
+            width: 14px;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-key {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .info-val {
+            color: var(--text);
+            font-weight: 400;
+        }
+
+        /* WEATHER */
+        .weather-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .04);
+            transition: transform .2s, box-shadow .2s;
+            height: 100%;
+        }
+
+        .weather-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 32px rgba(0, 0, 0, .08);
+        }
+
+        .weather-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .weather-city {
+            font-family: 'Fraunces', serif;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .weather-time {
+            font-size: 16px;
+            color: var(--muted);
+        }
+
+        .weather-temp {
+            font-family: 'Fraunces', serif;
+            font-size: 52px;
+            font-weight: 200;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .weather-temp sup {
+            font-size: 22px;
+            vertical-align: super;
+        }
+
+        .weather-condition {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            text-align: right;
+        }
+
+        .local-time {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        .local-time span {
+            color: var(--accent);
+            font-weight: 500;
+            font-family: 'Fraunces', serif;
+        }
+
+        .weather-search {
+            display: flex;
+            margin-top: 20px;
+        }
+
+        .weather-search input {
+            flex: 1;
+            background: var(--surface2);
+            border: 1.5px solid var(--border);
+            border-right: none;
+            border-radius: 10px 0 0 10px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            padding: 10px 18px;
+            outline: none;
+            transition: border-color .15s;
+        }
+
+        .weather-search input:focus {
+            border-color: var(--accent);
+        }
+
+        .weather-search button {
+            background: var(--accent);
+            border: 1.5px solid var(--accent);
+            border-radius: 0 10px 10px 0;
+            color: #fff;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background .15s;
+            white-space: nowrap;
+        }
+
+        .weather-search button:hover {
+            background: var(--accent2);
+        }
+
+        .weather-error {
+            color: var(--danger);
+            font-size: 13px;
+            padding: 10px 14px;
+            background: rgba(184, 50, 50, .07);
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        /* Quick Actions */
+        .action-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 400;
+            border: 1.5px solid var(--border);
+            color: var(--text);
+            transition: all .2s;
+            background: var(--surface2);
+        }
+
+        .action-link:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-light);
+            transform: translateX(4px);
+        }
+
+        .action-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: grid;
+            place-items: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* Two-column info grid */
+        .cards-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* Card animations */
+        .card, .weather-card {
+            animation: cardIn .5s ease both;
+        }
+
+        .c1 {
+            animation-delay: .15s;
+        }
+
+        .c2 {
+            animation-delay: .25s;
+        }
+
+        .c3 {
+            animation-delay: .35s;
+        }
+
+        .c4 {
+            animation-delay: .45s;
+        }
+
+        @media (max-width: 900px) {
+            .hero-section {
+                grid-template-columns: 1fr;
+            }
+
+            .cards-row {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                padding: 0 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-blob blob-1"></div>
+<div class="bg-blob blob-2"></div>
+
+<!-- TOPBAR -->
+<header class="topbar">
+    <div class="brand">
+        <div class="brand-dot"></div>
+        User<strong>System</strong>
+    </div>
+
+    <div class="menu-wrap">
+        <input type="checkbox" id="menu-toggle"/>
+        <label class="menu-btn" for="menu-toggle"><span></span></label>
+
+        <div class="menu-dropdown">
+            <a class="menu-item" href="/user/profile">👤 My Profile</a>
+            <a class="menu-item" href="/user/edit-profile">✏️ Edit Profile</a>
+            <form th:action="@{/logout}" method="post">
+                <button class="menu-logout-btn" type="submit">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+</header>
+
+<!-- MAIN -->
+<main>
+    <!-- ── HERO SECTION ── -->
+    <div class="hero-section">
+        <!-- LEFT: Greeting -->
+        <div class="greeting">
+            <div class="greeting-label">Good day</div>
+
+            <div class="greeting-name">
+                <em th:text="${user.honor != null and !user.honor.isEmpty()} ? ${user.honor} + ' ' : ''">&nbsp;</em>
+                <span th:text="${user.firstName + ' ' + user.lastName}">User Name</span>
+            </div>
+
+            <span class="greeting-role" th:text="${user.role}"> USER </span>
+        </div>
+
+        <!-- RIGHT: Weather -->
+        <div class="weather-card c1">
+            <div class="card-label">Live Weather</div>
+            <div class="weather-top">
+                <div class="weather-main">
+                    <div class="weather-city" th:text="${weather != null} ? ${weather.location} : ${city}">Dhaka
+                    </div>
+                    <div id="live-clock" class="weather-time"
+                         th:text="'Time: ' + ${weather != null} ? ${weather.time} : 'Unavailable'">—
+                    </div>
+                    <div class="local-time"
+                         style=" margin-top:6px; font-size:13px; color:var(--muted); letter-spacing:.04em;">Local
+                        Time:<span id="localClock">00:00:00</span></div>
+                </div>
+                <div th:if="${weather != null}" style="text-align:right">
+                    <div class="weather-temp"><span
+                            th:text="${#numbers.formatDecimal(weather.temperature, 1, 1)}">25.0</span><sup>°C</sup>
+                    </div>
+                    <div class="weather-condition" th:text="${weatherCondition}">Warm</div>
+                </div>
+                <div th:if="${weatherError}" class="weather-error" th:text="${weatherError}"></div>
+            </div>
+
+            <form th:action="@{/user/dashboard}" method="get" class="weather-search">
+                <label><input type="text" name="city" placeholder="Search By City Name"
+                              autocomplete="off"/></label>
+                <button type="submit">Search</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Info -->
+    <div class="cards-row">
+
+        <!-- Account info card -->
+        <div class="card c2">
+            <div class="card-label">Account Details</div>
+            <div class="info-row">
+                <span class="info-key">Email</span>
+                <span class="info-val" th:text="${user.email}">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-key">Gender</span>
+                <span class="info-val" th:text="${user.gender != null} ? ${user.gender} : '—'">—</span>
+            </div>
+            <div class="info-row">
+                <span class="info-key">Role</span>
+                <span class="info-val" th:text="${user.role}">—</span>
+            </div>
+        </div>
+
+        <!-- Quick links card -->
+        <div class="card c3">
+            <div class="card-label">Quick Actions</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+                <a href="/user/profile" class="action-link">
+                    <div class="action-icon" style="background:var(--accent-light)">👤</div>
+                    <div>
+                        <div style="font-weight:500;color:var(--text);font-size:14px">View My Profile</div>
+                        <div style="font-size:12px;color:var(--muted)">See your profile info</div>
+                    </div>
+                </a>
+
+                <a href="/user/edit-profile" class="action-link">
+                    <div class="action-icon" style="background:#eef5eb">✏️</div>
+                    <div>
+                        <div style="font-weight:500;color:var(--text);font-size:14px">Edit My Profile</div>
+                        <div style="font-size:12px;color:var(--muted)">Update your information</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div><!-- /.cards -->
+</main>
+
+<script>
+    function updateLocalClock() {
+        const now = new Date();
+        document.getElementById("localClock").textContent =
+            `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    }
+
+    updateLocalClock();
+    setInterval(updateLocalClock, 1000);
+
+    function startRunningClock() {
+        const clockElement = document.getElementById('live-clock');
+        let timeText = clockElement.innerText.replace('Time: ', '');
+        if (timeText === 'Unavailable') return;
+        let [hours, minutes, seconds] = timeText.split(':').map(Number);
+        let now = new Date();
+        now.setHours(hours, minutes, seconds || 0);
+        setInterval(() => {
+            now.setSeconds(now.getSeconds() + 1);
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            clockElement.innerText = `Time: ${h}:${m}:${s}`;
+        }, 1000);
+    }
+
+    window.onload = startRunningClock;
+</script>
+</body>
+</html>

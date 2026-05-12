@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,200;0,600;1,200&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --bg: #f5f0e8;
+            --card:#f5e8df;
+            --surface: #ffffff;
+            --surface2: #faf7f2;
+            --text: #1a1612;
+            --muted: #7a7169;
+            --accent: #c8622a;
+            --accent2: #af5424;
+            --accent-light: #f5e8df;
+            --border: #ddd4c8;
+            --danger: #b83232;
+            --success: #2d6a4f;
+            --admin: #b8860b;
+            --admin-light: #fdf6e3;
+            --admin-border: rgba(184,134,11,.25);
+            --r: 8px;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fieldIn {
+            from { opacity: 0; transform: translateX(-8px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse-ring {
+            0%   { transform: scale(1); opacity: .5; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        html,body{height:100%}
+        body{
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 300;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background-image: radial-gradient(circle, rgba(200,98,42,.08) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .bg-blob {
+            position: fixed; border-radius: 50%; filter: blur(80px);
+            pointer-events: none; z-index: 0;
+        }
+        .blob-1 { width: 400px; height: 400px; background: rgba(200,98,42,.08); top: -60px; right: -60px; }
+        .blob-2 { width: 280px; height: 280px; background: rgba(184,134,11,.05); bottom: 0; left: -40px; }
+
+        /* ── TOPBAR ── */
+        .topbar{
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 36px;
+            height: 64px;
+            background: rgba(245,240,232,.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .brand{
+            font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text);
+        }
+        .brand strong { color: var(--accent); }
+        .brand-dot {
+            width: 7px; height: 7px; border-radius: 50%; background: var(--accent); position: relative;
+        }
+        .brand-dot::after {
+            content: ''; position: absolute; inset: -3px;
+            border-radius: 50%; border: 2px solid var(--accent);
+            opacity: .4; animation: pulse-ring 2s ease-out infinite;
+        }
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+        .admin-badge {
+            font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+            padding: 3px 12px; border-radius: 99px;
+            background: var(--admin-light); border: 1px solid var(--admin-border);
+            color: var(--admin);
+        }
+
+        .logout-btn{
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 8px; font-size: 13px;
+            color: var(--muted); text-decoration: none;
+            border: 2px solid var(--border); background: var(--surface);
+            transition: all .2s;
+        }
+        .logout-btn:hover{color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+
+        /* ── MAIN ── */
+        main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:48px 32px}
+
+        /* ── PAGE HEADER ── */
+        .page-header{margin-bottom:32px}
+        .page-badge{
+            display: inline-block; padding: 3px 12px; border-radius: 99px; margin-bottom: 12px;
+            background: var(--admin-light); border: 1px solid var(--admin-border);
+            font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--admin);
+        }
+        .page-title{
+            font-family: 'Fraunces', serif; font-size: 30px; font-weight: 600; margin-bottom: 6px;
+            animation: fadeUp .5s .1s ease both;
+        }
+        .page-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; animation: fadeUp .5s .15s ease both; }
+
+        /* ── NOTICES ── */
+        .notice{padding:11px 16px;border-radius:6px;font-size:13px;margin-bottom:20px}
+        .notice-success{
+            padding: 12px 18px; border-radius: 10px; font-size: 13px;
+            margin-bottom: 24px; display: flex; align-items: center; gap: 10px;
+            background: rgba(45,106,79,.07); border: 1px solid rgba(45,106,79,.2);
+            color: var(--success); animation: fadeUp .4s ease both;
+        }
+        .notice-danger{
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(248, 113, 113, .08);
+            border: 1px solid rgba(248, 113, 113, .25);
+            color: var(--danger);
+            animation: fadeUp .4s ease both;
+        }
+
+        /* ── STATS ── */
+        .stats{display:flex;gap:16px;margin-bottom:28px}
+        .stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 22px;flex:1}
+        .stat-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+        .stat-value{font-family:'Fraunces',serif;font-size:32px;font-weight:600;color:var(--accent)}
+        .stat-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+        /* ── TOOLBAR ── */
+        /*
+          The toolbar contains three forms that all submit as GET to /admin/dashboard.
+          Each form preserves the other two params via hidden inputs so state is never lost.
+          - Search form: submits q, keeps size, resets to page 0
+          - Size form:   submits size, keeps q, resets to page 0
+          - Register:    just a link
+        */
+        .toolbar{
+            display:flex;align-items:center;gap:12px;
+            margin-bottom:12px;flex-wrap:wrap;
+        }
+
+        /* Search */
+        .search-form{display:flex;align-items:center;gap:0;flex:1;min-width:200px;max-width:380px}
+        .search-form input[type="text"]{
+            flex:1;background:var(--card);border:1px solid var(--border);border-right:none;
+            border-radius:6px 0 0 6px;color:var(--text);font-family:'DM Sans',sans-serif;
+            font-size:13px;padding:9px 14px;outline:none;transition:border-color .15s;
+        }
+        .search-form input[type="text"]::placeholder{color:var(--muted)}
+        .search-form input[type="text"]:focus{border-color:var(--accent)}
+        .search-form button{
+            display: inline-flex; align-items: center; gap: 8px;
+            background: linear-gradient(135deg, var(--accent), #e8874a);
+            border:1px solid var(--accent);
+            border-radius:0 10px 10px 0;
+            color:#fff;
+            font-family:'DM Sans',sans-serif;
+            font-size:13px;
+            font-weight:500;
+            padding:9px 18px;
+            cursor:pointer;
+            transition:opacity .15s;
+        }
+        .search-form button:hover{opacity:.85}
+
+        /* Clear search link */
+        .clear-search{
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 9px 18px; border-radius: 10px;
+            background: var(--surface2); color: var(--muted);
+            border: 2px solid var(--border);
+            text-decoration: none; font-size: 13px;
+            transition: all .2s;
+        }
+        .clear-search:hover{color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+
+        /* Size selector */
+        .size-form{display:flex;align-items:center;gap:8px;margin-left:auto}
+        .size-form label{font-size:13px;color:var(--muted);white-space:nowrap}
+        .size-form select{
+            background:var(--card);border:1px solid var(--border);border-radius:6px;
+            color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;
+            padding:9px 32px 9px 12px;outline:none;cursor:pointer;
+            -webkit-appearance:none;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235a6580' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat:no-repeat;background-position:right 10px center;
+            transition:border-color .15s;
+        }
+        .size-form select:focus{border-color:var(--accent)}
+        .size-form select option{background:var(--card)}
+
+        /* Register button */
+        .btn-register{
+            display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:6px;
+            font-size:12px;font-weight:500;
+            color:#fff;
+            border:1px solid var(--accent);
+            background:linear-gradient(135deg, var(--accent), #e8874a);
+            text-decoration:none;white-space:nowrap;transition:background .15s;
+        }
+        .btn-register:hover{opacity:.85}
+
+        /* ── SEARCH RESULT LABEL ── */
+        .search-label{
+            font-size:12px;color:var(--muted);margin-bottom:10px;
+            padding:8px 14px;background:rgba(232,184,109,.05);
+            border:1px solid rgba(232,184,109,.15);border-radius:6px;
+            display:inline-block;
+        }
+        .search-label strong{color:var(--accent)}
+
+        /* ── TABLE CARD ── */
+        .table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+        table{width:100%;border-collapse:collapse}
+        thead{background:rgba(232,184,109,.04)}
+        thead th{
+            padding:12px 16px;text-align:left;font-size:10px;font-weight:500;
+            letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+            border-bottom:1px solid var(--border);
+        }
+        tbody tr{border-bottom:1px solid rgba(30,37,56,.8);transition:background .1s}
+        tbody tr:last-child{border-bottom:none}
+        tbody tr:hover{background:rgba(232,184,109,.03)}
+        tbody td{padding:13px 16px;font-size:13px;vertical-align:middle}
+
+        .badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase}
+        .badge-USER{background:rgba(109,158,232,.1);color:var(--accent)}
+        .badge-ADMIN{background:rgba(232,184,109,.1);color:var(--accent2)}
+
+        .id-cell{font-size:10px;color:var(--muted);font-family:monospace;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+        /* ── ROW ACTIONS ── */
+        .actions{display:flex;gap:8px}
+        .btn-edit{
+            display:inline-flex;
+            align-items:center;
+            padding:5px 12px;
+            border-radius:4px;
+            font-size:12px;
+            color: #fff;
+            border:1px solid var(--accent);
+            background:var(--accent);
+            text-decoration:none;transition:background .15s;
+        }
+        .btn-edit:hover{opacity: .85}
+
+        .btn-delete{
+            display:inline-flex;
+            align-items:center;
+            padding:5px 12px;
+            border-radius:4px;
+            font-size:12px;
+            color:var(--muted);
+            background:var(--surface2);
+            border:2px solid var(--border);
+            font-family:'DM Sans',sans-serif;
+            cursor:pointer;
+            transition:background .15s;
+        }
+        .btn-delete:hover{color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+
+        /* ── EMPTY ── */
+        .empty{text-align:center;padding:56px;color:var(--muted);font-size:14px}
+        .empty-icon{font-size:32px;margin-bottom:12px;opacity:.4}
+
+        /* ── PAGINATION BAR ── */
+        .pagination{
+            display:flex;align-items:center;justify-content:space-between;
+            padding:13px 20px;border-top:1px solid var(--border);flex-wrap:wrap;gap:10px;
+        }
+        .pagination-info{font-size:12px;color:var(--muted)}
+        .pagination-info strong{color:var(--text)}
+        .pagination-nav{display:flex;align-items:center;gap:6px}
+        .page-btn{
+            display:inline-flex;
+            align-items:center;
+            gap:4px;
+            padding:6px 14px;
+            border-radius:4px;
+            font-size:12px;
+            color:#fff;
+            border:1px solid rgba(232,184,109,.3);
+            background:var(--accent);
+            text-decoration:none;
+            white-space:nowrap;
+            transition:background .15s;
+        }
+        .page-btn:hover{opacity:.85}
+        .page-btn.disabled{
+            color:var(--muted);border-color:var(--border);background:transparent;
+            pointer-events:none;cursor:default;
+        }
+        .page-indicator{
+            padding:6px 14px;border-radius:4px;font-size:12px;
+            color:var(--text);background:rgba(232,184,109,.1);
+            border:1px solid rgba(232,184,109,.25);white-space:nowrap;
+        }
+
+        @media (max-width: 600px) {
+            .form-card { padding: 28px 20px; }
+            .grid { grid-template-columns: 1fr; }
+            .full { grid-column: auto; }
+        }
+
+    </style>
+</head>
+<body>
+<div class="bg-blob blob-1"></div>
+<div class="bg-blob blob-2"></div>
+
+<header class="topbar">
+    <a href="/" class="brand"><div class="brand-dot"></div>User<strong>System</strong> - ADMIN</a>
+    <form th:action="@{/logout}" method="post">
+        <div class="topbar-right">
+            <span class="admin-badge">Admin</span>
+        <button class="logout-btn" type="submit">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+        </button>
+        </div>
+    </form>
+</header>
+
+<main>
+
+    <!-- Header -->
+    <div class="page-header">
+        <div class="page-badge">Admin Panel</div>
+        <div class="page-title">User Management</div>
+        <p class="page-sub">
+            Signed in as <strong th:text="${admin.email}" style="color:var(--text)">admin</strong>
+        </p>
+    </div>
+
+    <!-- Notices -->
+    <div th:if="${param.updated}"    class="notice notice-success">&#10003; User updated successfully.</div>
+    <div th:if="${param.deleted}"    class="notice notice-danger">&#10005; User deleted.</div>
+    <div th:if="${param.registered}" class="notice notice-success">&#10003; New user registered successfully.</div>
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-label">Selected Users</div>
+            <div class="stat-value" th:text="${usersPage.totalElements}">0</div>
+            <div class="stat-sub">in this list</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Admins</div>
+            <div class="stat-value" th:text="${adminCount}">0</div>
+            <div class="stat-sub">with admin role</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value" th:text="${userCount}">0</div>
+            <div class="stat-sub">with user role</div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+
+        <!-- ① Search -->
+        <form class="search-form" th:action="@{/admin/dashboard}" method="get">
+            <input type="hidden" name="size" th:value="${size}"/>
+            <input type="hidden" name="page" value="0"/>
+            <input type="text"
+                   name="q"
+                   th:value="${q}"
+                   placeholder="Search by name, email or ID…"
+                   autocomplete="off"/>
+            <button type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        </form>
+
+        <!-- Clear search — only shown when a query is active -->
+        <a th:if="${q != null and !q.isEmpty()}"
+           class="clear-search"
+           th:href="@{/admin/dashboard(size=${size})}">
+            &#10005; Clear
+        </a>
+
+        <!-- ② Page size selector -->
+        <form class="size-form" th:action="@{/admin/dashboard}" method="get">
+            <input type="hidden" name="q"    th:value="${q}"/>
+            <input type="hidden" name="page" value="0"/>
+            <label for="sizeSelect">Show</label>
+            <select id="sizeSelect" name="size" onchange="this.form.submit()">
+                <option value="10"  th:selected="${size == 10}">10</option>
+                <option value="30"  th:selected="${size == 30}">30</option>
+                <option value="50"  th:selected="${size == 50}">50</option>
+            </select>
+            <!-- Fallback submit for browsers that don't fire onchange reliably -->
+            <button type="submit"
+                    style="display:none">Apply</button>
+        </form>
+
+        <!-- Register link -->
+        <a class="btn-register" th:href="@{/admin/register}">
+            <i class="fa-solid fa-user-plus"></i> Register New User
+        </a>
+
+    </div><!-- /.toolbar -->
+
+    <!-- Search result label -->
+    <div th:if="${q != null and !q.isEmpty()}" class="search-label">
+        Showing results for <strong th:text="'&quot;' + ${q} + '&quot;'">"…"</strong>
+        &mdash; <span th:text="${usersPage.totalElements}">0</span> match(es) found
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+
+        <div th:if="${usersPage.data.isEmpty()}" class="empty">
+            <div class="empty-icon"><i class="fa-regular fa-user"></i></div>
+            <span th:if="${q != null and !q.isEmpty()}"
+                  th:text="'No users match &quot;' + ${q} + '&quot;'">No results</span>
+            <span th:unless="${q != null and !q.isEmpty()}">No users registered yet.</span>
+        </div>
+
+        <table th:unless="${usersPage.data.isEmpty()}">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Name</th>
+                <th>Gender</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="u : ${usersPage.data}">
+                <td><div class="id-cell" th:title="${u.id}" th:text="${u.id}">—</div></td>
+                <td th:text="${u.honor != null and !u.honor.isEmpty()} ? ${u.honor} : '—'">—</td>
+                <td th:text="${u.firstName + ' ' + u.lastName}">—</td>
+                <td th:text="${u.gender != null and !u.gender.isEmpty()} ? ${u.gender} : '—'">—</td>
+                <td th:text="${u.email}">—</td>
+                <td>
+                        <span class="badge"
+                              th:classappend="'badge-' + ${u.role}"
+                              th:text="${u.role}">ROLE</span>
+                </td>
+                <td>
+                    <div class="actions">
+                        <a class="btn-edit"
+                           th:href="@{/admin/edit/{id}(id=${u.id})}">&#9998; Edit</a>
+                        <form style="display:inline"
+                              th:action="@{/admin/delete/{id}(id=${u.id})}"
+                              method="post">
+                            <button class="btn-delete" type="submit">&#10005; Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div th:unless="${usersPage.data.isEmpty()}" class="pagination">
+
+            <div class="pagination-info">
+                Showing
+                <strong th:text="${usersPage.data.size()}">0</strong>
+                of
+                <strong th:text="${usersPage.totalElements}">0</strong>
+                users
+                &nbsp;|&nbsp;
+                <span th:text="${size}">10</span> per page
+            </div>
+
+            <div class="pagination-nav">
+
+                <!-- PREV -->
+                <a th:if="${usersPage.page > 0}"
+                   class="page-btn"
+                   th:href="@{/admin/dashboard(page=${usersPage.page - 1},size=${size},q=${q})}">
+                    &larr; Prev
+                </a>
+                <span th:unless="${usersPage.page > 0}"
+                      class="page-btn disabled">&larr; Prev</span>
+
+                <!-- PAGE X / Y -->
+                <span class="page-indicator"
+                      th:text="${usersPage.page + 1} + ' / ' + ${usersPage.totalPages}">
+                    1 / 1
+                </span>
+
+                <!-- NEXT -->
+                <a th:if="${usersPage.page + 1 < usersPage.totalPages}"
+                   class="page-btn"
+                   th:href="@{/admin/dashboard(page=${usersPage.page + 1},size=${size},q=${q})}">
+                    Next &rarr;
+                </a>
+                <span th:unless="${usersPage.page + 1 < usersPage.totalPages}"
+                      class="page-btn disabled">Next &rarr;</span>
+
+            </div>
+        </div>
+
+    </div><!-- /.table-card -->
+
+</main>
+</body>
+</html>

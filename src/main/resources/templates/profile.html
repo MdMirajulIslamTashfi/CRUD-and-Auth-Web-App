@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>My Profile — UserSystem</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,600;1,9..144,200;1,9..144,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #f5f0e8;
+            --surface: #ffffff;
+            --surface2: #faf7f2;
+            --text: #1a1612;
+            --muted: #7a7169;
+            --accent: #c8622a;
+            --accent2: #af5424;
+            --accent-light: #f5e8df;
+            --border: #ddd4c8;
+            --success: #2d6a4f;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fieldIn {
+            from { opacity: 0; transform: translateX(-6px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse-ring {
+            0%   { transform: scale(1); opacity: .5; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        @keyframes badge-pop {
+            0%   { transform: scale(.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        html, body { height: 100%; }
+        body {
+            background: var(--bg); color: var(--text);
+            font-family: 'DM Sans', sans-serif; font-weight: 300;
+            min-height: 100vh; overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background-image: radial-gradient(circle, rgba(200,98,42,.08) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        .bg-blob {
+            position: fixed; border-radius: 50%; filter: blur(80px);
+            pointer-events: none; z-index: 0;
+        }
+        .blob-1 { width: 400px; height: 400px; background: rgba(200,98,42,.08); top: -60px; right: -60px; }
+        .blob-2 { width: 280px; height: 280px; background: rgba(200,98,42,.06); bottom: 0; left: -40px; }
+
+        /* TOPBAR */
+        .topbar {
+            position: sticky; top: 0; z-index: 10;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 36px; height: 64px;
+            background: rgba(245,240,232,.92); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .brand {
+            font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600;
+            text-decoration: none; color: var(--text);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .brand strong { color: var(--accent); }
+        .brand-dot {
+            width: 7px; height: 7px; border-radius: 50%; background: var(--accent); position: relative;
+        }
+        .brand-dot::after {
+            content: ''; position: absolute; inset: -3px;
+            border-radius: 50%; border: 2px solid var(--accent);
+            opacity: .4; animation: pulse-ring 2s ease-out infinite;
+        }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 400;
+            color: var(--muted); text-decoration: none;
+            border: 1.5px solid var(--border); background: var(--surface);
+            transition: all .2s;
+        }
+        .back-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+
+        /* MAIN */
+        main { position: relative; z-index: 1; max-width: 660px; margin: 0 auto; padding: 48px 32px; }
+
+        /* SUCCESS NOTICE */
+        .notice-success {
+            padding: 12px 18px; border-radius: 10px; font-size: 13px;
+            margin-bottom: 24px; display: flex; align-items: center; gap: 10px;
+            background: rgba(45,106,79,.07); border: 1px solid rgba(45,106,79,.2);
+            color: var(--success); animation: fadeUp .4s ease both;
+        }
+
+        /* PROFILE HEADER */
+        .profile-header { margin-bottom: 36px; animation: fadeUp .5s .1s ease both; }
+
+        .profile-badge {
+            width: 72px; height: 72px; border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent), #e8874a);
+            display: grid; place-items: center;
+            font-family: 'Fraunces', serif; font-size: 28px; font-weight: 600;
+            color: #fff; margin-bottom: 18px;
+            box-shadow: 0 8px 24px rgba(200,98,42,.3);
+            animation: badge-pop .5s .2s ease both;
+        }
+
+        .profile-name {
+            font-family: 'Fraunces', serif; font-size: 30px; font-weight: 600; margin-bottom: 4px;
+        }
+        .profile-email { font-size: 13px; color: var(--muted); }
+
+        .role-tag {
+            display: inline-block; margin-top: 10px;
+            padding: 4px 14px; border-radius: 99px;
+            background: var(--accent-light); border: 1px solid rgba(200,98,42,.25);
+            font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+            color: var(--accent); font-weight: 600;
+        }
+
+        /* FORM CARD */
+        .form-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 22px; padding: 36px 40px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.05);
+            animation: fadeUp .5s .2s ease both;
+            position: relative; overflow: hidden;
+        }
+        .form-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent), #e8874a, var(--accent));
+        }
+
+        .form-card-title {
+            font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+            color: var(--muted); margin-bottom: 28px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .form-card-title::before {
+            content: ''; width: 14px; height: 2px;
+            background: var(--accent); border-radius: 2px;
+        }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+        .full { grid-column: 1/-1; }
+
+        .field { display: flex; flex-direction: column; gap: 6px; animation: fieldIn .4s ease both; }
+        label {
+            font-size: 11px; font-weight: 500; letter-spacing: .08em;
+            text-transform: uppercase; color: var(--muted);
+        }
+
+        .field-val {
+            background: var(--surface2);
+            border: 1.5px solid var(--border); border-radius: 10px;
+            padding: 12px 16px; font-size: 14px; color: var(--text); font-weight: 400;
+            transition: border-color .2s;
+        }
+        .field-val:hover { border-color: #c5bbb0; }
+        .field-val.empty { color: var(--muted); font-style: italic; font-size: 13px; }
+
+        hr { border: none; border-top: 1px dashed var(--border); grid-column: 1/-1; margin: 4px 0; }
+
+        /* ACTIONS */
+        .actions { margin-top: 28px; display: flex; gap: 12px; }
+        .btn-edit {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 22px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), #e8874a);
+            color: #fff; font-family: 'DM Sans', sans-serif;
+            font-size: 13px; font-weight: 500; text-decoration: none;
+            box-shadow: 0 4px 14px rgba(200,98,42,.28);
+            transition: all .2s;
+        }
+        .btn-edit:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(200,98,42,.38); }
+
+        .btn-dash {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 22px; border-radius: 10px;
+            background: var(--surface2); color: var(--muted);
+            border: 1.5px solid var(--border);
+            font-family: 'DM Sans', sans-serif; font-size: 13px; text-decoration: none;
+            transition: all .2s;
+        }
+        .btn-dash:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+
+        @media (max-width: 600px) {
+            .form-card { padding: 28px 22px; }
+            .grid { grid-template-columns: 1fr; }
+            .full { grid-column: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bg-blob blob-1"></div>
+<div class="bg-blob blob-2"></div>
+
+<header class="topbar">
+    <a href="/" class="brand"><div class="brand-dot"></div>User<strong>System</strong></a>
+    <a class="back-btn" href="/user/dashboard">← Dashboard</a>
+</header>
+
+<main>
+    <div th:if="${param.updated}" class="notice-success">
+        ✓ Profile updated successfully.
+    </div>
+
+    <!-- Profile header -->
+    <div class="profile-header">
+        <div class="profile-badge"
+             th:text="${user.firstName != null} ? ${user.firstName.substring(0,1).toUpperCase()} : '?'">A</div>
+        <div class="profile-name"
+             th:text="${(user.honor != null and !user.honor.isEmpty()) ? user.honor + ' ' : ''} + ${user.firstName} + ' ' + ${user.lastName}">
+            Full Name
+        </div>
+        <div class="profile-email" th:text="${user.email}">email</div>
+        <span class="role-tag" th:text="${user.role}">USER</span>
+    </div>
+
+    <!-- Fields card -->
+    <div class="form-card">
+        <div class="form-card-title">Profile Information</div>
+
+        <div class="grid">
+            <div class="field" style="animation-delay:.05s">
+                <label>Title / Honor</label>
+                <div class="field-val"
+                     th:classappend="${user.honor == null or user.honor.isEmpty()} ? 'empty'"
+                     th:text="${user.honor != null and !user.honor.isEmpty()} ? ${user.honor} : 'Not set'">—</div>
+            </div>
+
+            <div class="field" style="animation-delay:.1s">
+                <label>Gender</label>
+                <div class="field-val"
+                     th:classappend="${user.gender == null or user.gender.isEmpty()} ? 'empty'"
+                     th:text="${user.gender != null and !user.gender.isEmpty()} ? ${user.gender} : 'Not set'">—</div>
+            </div>
+
+            <div class="field" style="animation-delay:.15s">
+                <label>First Name</label>
+                <div class="field-val" th:text="${user.firstName}">—</div>
+            </div>
+
+            <div class="field" style="animation-delay:.2s">
+                <label>Last Name</label>
+                <div class="field-val" th:text="${user.lastName}">—</div>
+            </div>
+
+            <hr/>
+
+            <div class="field full" style="animation-delay:.25s">
+                <label>Email Address</label>
+                <div class="field-val" th:text="${user.email}">—</div>
+            </div>
+
+            <div class="field full" style="animation-delay:.3s">
+                <label>Role</label>
+                <div class="field-val" th:text="${user.role}">—</div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <a class="btn-edit" href="/user/edit-profile">✏️ Edit Profile</a>
+            <a class="btn-dash" href="/user/dashboard">← Dashboard</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>
