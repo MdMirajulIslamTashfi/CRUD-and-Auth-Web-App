@@ -6,6 +6,7 @@ import com.web.crudandauth.dtos.response.LoginResponseDto;
 import com.web.crudandauth.dtos.response.PaginationResponseDto;
 import com.web.crudandauth.dtos.response.RegisterResponseDto;
 import com.web.crudandauth.entities.User;
+import com.web.crudandauth.enums.CreatedBy;
 import com.web.crudandauth.enums.Roles;
 import com.web.crudandauth.exceptionHandler.EmailAlreadyExistsException;
 import com.web.crudandauth.exceptionHandler.InvalidPasswordException;
@@ -19,6 +20,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -37,9 +40,14 @@ public class UserService {
         if (!dto.getPassword().equals(dto.getConfirmPassword())) {
             throw new InvalidPasswordException("Passwords don't match");
         }
-        if (userRepositories.findByEmail(dto.getEmail()).isPresent()) {
+
+        userRepositories.findByEmail(dto.getEmail()).ifPresent(existing -> {
+            if (existing.getCreatedBy() == CreatedBy.GOOGLE) {
+                throw new EmailAlreadyExistsException(
+                        "This email is linked to a Google account. Please sign in with Google.");
+            }
             throw new EmailAlreadyExistsException("Email already registered: " + dto.getEmail());
-        }
+        });
 
         User user = userRepositories.save(User.builder()
                 .honor(dto.getHonor())
@@ -48,6 +56,8 @@ public class UserService {
                 .gender(dto.getGender())
                 .email(dto.getEmail())
                 .password(dto.getPassword())
+                .createdBy(CreatedBy.EMAIL)
+                .createdAt(LocalDateTime.now())
                 .role(dto.getRole() != null ? dto.getRole() : Roles.USER)
                 .build());
 

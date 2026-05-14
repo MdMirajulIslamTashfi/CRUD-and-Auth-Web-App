@@ -1,11 +1,14 @@
 package com.web.crudandauth.entities;
 
+import com.web.crudandauth.enums.CreatedBy;
 import com.web.crudandauth.enums.Roles;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -23,6 +26,10 @@ public class User {
     private String gender;
     private String email;
     private String password;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CreatedBy createdBy;
+    private LocalDateTime createdAt;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Roles role;

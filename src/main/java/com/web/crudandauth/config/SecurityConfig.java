@@ -1,6 +1,7 @@
 package com.web.crudandauth.config;
 
 import com.web.crudandauth.filter.JwtAuthFilter;
+import com.web.crudandauth.util.handler.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,39 +17,45 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                // Stateless — no server-side session
+
+                // ── Must NOT be STATELESS — OAuth2 redirect flow needs a session ──
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 
                 .authorizeHttpRequests(auth -> auth
-                        // Public pages — no token required
-                        .requestMatchers("/", "/index", "/register", "/login", "/otp", "/otp/resend", "/h2-console/**").permitAll()
-                        // User-only pages
+                        .requestMatchers(
+                                "/", "/index", "/register", "/login",
+                                "/otp", "/otp/resend",
+                                "/verify-google-otp", "/verify-google-otp/resend",  // ← new
+                                "/h2-console/**"
+                        ).permitAll()
                         .requestMatchers("/user/**").hasRole("USER")
-                        // Admin-only pages
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
 
-                // Redirect unauthenticated requests to login page (MVC behavior)
-                .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) ->
-                                response.sendRedirect("/login"))
-                        .accessDeniedHandler((request, response, accessDeniedException) ->
-                                response.sendRedirect("/login?forbidden=true"))
+                .oauth2Login(oauth -> oauth
+                        .loginPage("/login")
+                        .successHandler(oAuth2SuccessHandler)
                 )
-                // Allow H2 console frames
+
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) ->
+                                res.sendRedirect("/login"))
+                        .accessDeniedHandler((req, res, e) ->
+                                res.sendRedirect("/login?forbidden=true"))
+                )
+
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.sameOrigin())
                 )
 
-                // Plug in our JWT filter before Spring's own auth filter
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
